@@ -1,6 +1,8 @@
 package pkg
 
 import (
+	"errors"
+	"fmt"
 	"log"
 	"os"
 	"time"
@@ -9,6 +11,7 @@ import (
 )
 
 var secret = []byte(os.Getenv("SECRET"))
+var ErrInvalidToken = errors.New("invalid token")
 
 func init() {
 	if len(secret) == 0 {
@@ -30,4 +33,20 @@ func GenerateToken(userId uint) (string, error) {
 		return "", err
 	}
 	return tokenString, nil
+}
+func ParseToken(tokenString string) (*Claims, error) {
+	token, err := jwt.ParseWithClaims(tokenString, &Claims{}, func(token *jwt.Token) (interface{}, error) {
+		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+			return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
+		}
+		return secret, nil
+	})
+	if err != nil {
+		return nil, err
+	}
+	claims, ok := token.Claims.(*Claims)
+	if !ok {
+		return nil, ErrInvalidToken
+	}
+	return claims, nil
 }
