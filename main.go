@@ -3,6 +3,7 @@ package main
 import (
 	"IM_Server/dao"
 	"IM_Server/handler"
+	"IM_Server/ws"
 
 	"github.com/gin-gonic/gin"
 )
@@ -17,5 +18,9 @@ func main() {
 	})
 	r.POST("/user/register", handler.Register)
 	r.POST("/user/login", handler.Login)
+	r.GET("/ws", ws.Connect)
+
+	ws.StartHub()
+
 	r.Run(":8080")
 }
