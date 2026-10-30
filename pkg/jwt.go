@@ -3,19 +3,24 @@ package pkg
 import (
 	"errors"
 	"fmt"
-	"log"
-	"os"
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
 )
 
-var secret = []byte(os.Getenv("SECRET"))
+var secret []byte
+var expireHours = 24
+
 var ErrInvalidToken = errors.New("invalid token")
 
-func init() {
-	if len(secret) == 0 {
-		log.Fatal("SECRET environment variable not set")
+// InitJWT 用配置里的密钥初始化；不再从环境变量隐式读取，启动时显式注入
+func InitJWT(secretStr string, hours int) {
+	if secretStr == "" {
+		panic("jwt secret is empty")
+	}
+	secret = []byte(secretStr)
+	if hours > 0 {
+		expireHours = hours
 	}
 }
 
@@ -25,7 +30,7 @@ type Claims struct {
 }
 
 func GenerateToken(userId uint) (string, error) {
-	exp := jwt.NewNumericDate(time.Now().Add(24 * time.Hour))
+	exp := jwt.NewNumericDate(time.Now().Add(time.Duration(expireHours) * time.Hour))
 	issued := jwt.NewNumericDate(time.Now())
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, Claims{userId, jwt.RegisteredClaims{IssuedAt: issued, Issuer: "im-server", ExpiresAt: exp}})
 	tokenString, err := token.SignedString(secret)
