@@ -2,7 +2,7 @@ package dao
 
 import (
 	"IM_Server/model"
-	"log"
+	"IM_Server/pkg"
 
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
@@ -11,14 +11,21 @@ import (
 var DB *gorm.DB
 
 func InitDB() {
-	dsn := "root:123456@tcp(127.0.0.1:3306)/im_server?charset=utf8mb4&parseTime=True&loc=Local"
-	db, err := gorm.Open(mysql.Open(dsn), &gorm.Config{})
+	db, err := gorm.Open(mysql.Open(pkg.Cfg.MySQL.DSN), &gorm.Config{})
 	if err != nil {
-		log.Fatal(err)
+		pkg.Log.Fatal("connect mysql: ", err)
 	}
 	DB = db
-	err = DB.AutoMigrate(&model.User{})
+	err = DB.AutoMigrate(
+		&model.User{},
+		&model.Message{},
+		&model.GroupMessage{},
+		&model.Friend{},
+		&model.FriendRequest{},
+		&model.Group{},
+		&model.GroupMember{},
+	)
 	if err != nil {
-		log.Fatal(err)
+		pkg.Log.Fatal("auto migrate: ", err)
 	}
 }

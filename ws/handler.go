@@ -2,7 +2,7 @@ package ws
 
 import (
 	"IM_Server/pkg"
-	"fmt"
+	"IM_Server/service"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -19,15 +19,12 @@ func Connect(c *gin.Context) {
 		c.JSON(401, gin.H{"message": err.Error()})
 		return
 	}
-	fmt.Println("鉴权")
 
 	conn, err := upgrader.Upgrade(c.Writer, c.Request, nil)
 	if err != nil {
-		fmt.Println(err)
+		pkg.Log.Error("ws upgrade: ", err)
 		return
 	}
-
-	fmt.Println("升级成功")
 
 	client := &Client{
 		conn:   conn,
@@ -36,6 +33,7 @@ func Connect(c *gin.Context) {
 		userID: claims.UserId,
 	}
 	hub.register <- client
+	service.SetOnline(claims.UserId) // 写 Redis 在线状态（带 TTL，心跳续期）
 
 	go client.writePump()
 	go client.readPump()
