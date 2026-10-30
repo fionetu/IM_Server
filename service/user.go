@@ -11,6 +11,7 @@ import (
 
 var ErrUserExist = errors.New("user already exists")
 var ErrInvalidCredentials = errors.New("用户名或密码错误")
+var ErrUserNotFound = errors.New("用户不存在")
 
 func Register(user *model.User) error {
 
